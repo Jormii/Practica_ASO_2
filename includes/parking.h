@@ -3,27 +3,27 @@
 #include "mpi.h"
 #include "vehiculo.h"
 
-#define MIN_PISOS 1
-#define MIN_PLAZAS 2
+#define PLAZA_NO_ENCONTRADA 0
+#define PLAZA_ENCONTRADA 1
+#define PLAZA_VACIA 0
 
-#define PISOS 2
-#define PLAZAS 6
+#define PISOS 3
+#define PLAZAS 5
 
 typedef struct parking_t parking;
 typedef struct piso_t piso;
 
-void crear_parking(parking *park, int pisos, int plazas_por_piso);
+void crear_parking(parking *park);
 void destruir_parking(parking *park);
-piso *buscar_plaza(vehiculo vehi);
-void imprimir_parking(const parking *park);
+char buscar_plaza(vehiculo *vehi, parking *park);
+void imprimir_parking(parking park);
 
 typedef struct parking_t {
-    int n_pisos;
-    int n_plazas;
-    piso *pisos;
+    piso *pisos[PISOS];
 } parking;
 
 typedef struct piso_t {
-    int n_planta;
-    int *id_vehiculos;
+    int n_piso;
+    volatile int plazas_libres;
+    int id_vehiculos[PLAZAS];
 } piso;

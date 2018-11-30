@@ -8,6 +8,7 @@
 typedef struct vehiculo_t vehiculo;
 
 typedef struct vehiculo_t {
+    int matricula;
     int tamano;
     int piso_ocupado;
     int plaza_ocupada;
