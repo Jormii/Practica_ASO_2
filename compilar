@@ -1,0 +1,5 @@
+#!/bin/bash
+
+mpicc parking.c -o parking
+mpicc camion.c -o camion
+mpicc coche.c -o coche

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mpirun -np 1 parking : -np 1 coche : -np 1 camion
