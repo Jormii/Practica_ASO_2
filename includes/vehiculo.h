@@ -1,5 +1,14 @@
 #include "mpi.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+
+#define MAESTRO 0
+#define T_DORMIDO_MAX 10;
+
+#define OP_APARCAR 0
+#define OP_SALIR 1
 
 #define NUM_ARGUMENTOS 3
 #define ARG_OPERACION 0
@@ -8,9 +17,6 @@
 
 #define TAM_COCHE 1
 #define TAM_CAMION 2
-
-#define OP_APARCAR 1
-#define OP_SALIR 2
 
 typedef struct vehiculo_t vehiculo;
 

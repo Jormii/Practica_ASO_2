@@ -7,23 +7,25 @@
 #define PLAZA_ENCONTRADA 1
 #define PLAZA_VACIA 0
 
-#define PISOS 5
-#define PLAZAS 10
+#define ARG_PISOS 1
+#define ARG_PLAZAS 2
 
 typedef struct parking_t parking;
 typedef struct piso_t piso;
 
-void crear_parking(parking *park);
+void crear_parking(parking *park, int pisos, int plazas);
 void destruir_parking(parking *park);
 char buscar_plaza(unsigned int tamano, parking *park, unsigned int matricula);
+void vaciar_plaza(unsigned int tamano, parking *park, unsigned int matricula);
 void imprimir_parking(const parking *park);
 
 typedef struct parking_t {
-    piso *pisos[PISOS];
+    int n_pisos;
+    int n_plazas;
+    piso *pisos;
 } parking;
 
 typedef struct piso_t {
-    int n_piso;
     int plazas_libres;
-    int id_vehiculos[PLAZAS];
+    int *id_vehiculos;
 } piso;

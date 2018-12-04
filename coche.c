@@ -13,10 +13,15 @@ int main(int argc, char *argv[])
     argumentos[ARG_TAMANO] = coche.tamano;
     argumentos[ARG_MATRICULA] = coche.matricula;
 
-    // printf("Coche con matricula: %d\n", coche.matricula);
-
     // Mandar señal de aparque
-    MPI_Send(argumentos, NUM_ARGUMENTOS, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(argumentos, NUM_ARGUMENTOS, MPI_UNSIGNED, MAESTRO, 0, MPI_COMM_WORLD);
+
+    srand(time(NULL));
+    int tiempo_dormir = rand() % T_DORMIDO_MAX + 1;
+    sleep(tiempo_dormir);
+
+    argumentos[ARG_OPERACION] = OP_SALIR;
+    MPI_Send(argumentos, NUM_ARGUMENTOS, MPI_UNSIGNED, MAESTRO, 0, MPI_COMM_WORLD);
 
     MPI_Finalize();
 
