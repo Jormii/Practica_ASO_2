@@ -11,10 +11,16 @@
 #define OP_APARCAR 0        // Valor enviado al parking cuando se quiere aparcar
 #define OP_SALIR 1          // Valor enviado al parking cuando se quiere salir de este
 
-#define NUM_ARGUMENTOS 3    // Numero de atributos que se pasaran al parking en un mensaje
+#define NUM_ARGUMENTOS 4    // Numero de atributos que se pasaran al parking en un mensaje
 #define ARG_OPERACION 0     // Posicion que ocupa la operacion a realizar
 #define ARG_TAMANO 1        // Posicion que ocupa el tamano del vehiculo
-#define ARG_MATRICULA 2     // Posicion que ocupa el identificador del vehiculo
+#define ARG_MATRICULA_O_PISO 2      // Posicion que ocupa el identificador del vehiculo o el piso en el que se encuentra aparcado
+#define ARG_PLAZA 3                 // Posicion que ocupa la plaza que ocupa el vehiculo en el parking
+
+#define NUM_RETURNS 3
+#define RETURN_HABIA_PLAZA 0
+#define RETURN_PISO 1
+#define RETURN_PRIMERA_PLAZA 2
 
 #define TAM_COCHE 1         // Tamano de un coche
 #define TAM_CAMION 2        // Tamano de un camion

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mpirun --map-by socket:OVERSUBSCRIBE -np 1 parking 10 10 : -np 10 camion : -np 10 coche
+mpirun --map-by socket:OVERSUBSCRIBE -np 1 parking : -np 1 camion : -np 1 coche
