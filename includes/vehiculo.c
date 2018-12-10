@@ -3,8 +3,9 @@
 
 void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **argv[])
 {
-    // Se inicializa MPI.
+    // Se inicializa MPI y una semilla.
     MPI_Init(argc, argv);
+    srand(time(NULL));
 
     // Se crea el vehiculo.
     vehiculo vehi;
@@ -43,7 +44,6 @@ void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **ar
         } while (!habia_plaza);
 
         // El proceso se duerme un tiempo aletorio en el intervalo (1, T_DORMIDO_MAX).
-        srand(time(NULL)); // ¿GENERA UNA SEMILLA DISTINTA CADA VEZ QUE ES INVOCADO?
         int tiempo_dormir = rand() % T_DORMIDO_MAX + 1;
         sleep(tiempo_dormir);
 
