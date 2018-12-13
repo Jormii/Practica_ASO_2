@@ -25,7 +25,7 @@ void destruir_parking(parking *park)
 {
     for (int p = 0; p < park->n_pisos; ++p)
     {
-        free(park->pisos[p].id_vehiculos); // ¿Memory leak?
+        free(park->pisos[p].id_vehiculos); // ¿MEMORY LEAK?
     }
     free(park->pisos);
 }

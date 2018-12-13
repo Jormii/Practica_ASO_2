@@ -1,3 +1,4 @@
+#pragma once
 #include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +31,9 @@
 
 /// Declaracion de los structs
 typedef struct vehiculo_t vehiculo; // Struct que contiene todas las variables necesarias para el control de un vehiculo.
+
+void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **argv[]); /* Bucle que envia mensajes de
+                                                                                        aparque y salida al parking. */
 
 /// Definicion de los structs
 typedef struct vehiculo_t
