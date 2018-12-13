@@ -1,4 +1,4 @@
-#pragma once // ???
+#pragma once
 #include "vehiculo.h"
 
 void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **argv[])
@@ -11,7 +11,6 @@ void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **ar
     vehiculo vehi;
     MPI_Comm_rank(MPI_COMM_WORLD, &vehi.matricula);
     vehi.tamano = tamano_vehiculo;
-    unsigned int habia_plaza = 0;
 
     // Se crea la variable de argumentos que se pasaran al proceso parking.
     unsigned int argumentos[NUM_ARGUMENTOS];
@@ -28,20 +27,11 @@ void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **ar
         argumentos[ARG_MATRICULA_O_PISO] = vehi.matricula;
         argumentos[ARG_PLAZA] = 0;
 
-        // Mandar senal de aparque. El vehiculo mandara el mensaje hasta que se encuentre plaza para este.
-        do
-        {
-            // Se envia el mensaje.
-            MPI_Send(argumentos, NUM_ARGUMENTOS, MPI_UNSIGNED, MAESTRO, 0, MPI_COMM_WORLD);
+        // Se envia la senal de aparque.
+        MPI_Send(argumentos, NUM_ARGUMENTOS, MPI_UNSIGNED, MAESTRO, 0, MPI_COMM_WORLD);
 
-            // Se espera a la respuesta del parking para proceder.
-            MPI_Recv(returns, NUM_RETURNS, MPI_UNSIGNED, MAESTRO, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            habia_plaza = returns[RETURN_HABIA_PLAZA];
-            if (!habia_plaza)
-            {
-                sleep(1); // Dormir un segundo si no se encontro plaza en la que aparcar el vehiculo.
-            }
-        } while (!habia_plaza);
+        // Se espera a que el parking confirme que hay espacio para este vehiculo.
+        MPI_Recv(returns, NUM_RETURNS, MPI_UNSIGNED, MAESTRO, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         // El proceso se duerme un tiempo aletorio en el intervalo (1, T_DORMIDO_MAX).
         int tiempo_dormir = rand() % T_DORMIDO_MAX + 1;
@@ -53,8 +43,10 @@ void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **ar
         argumentos[ARG_PLAZA] = returns[RETURN_PRIMERA_PLAZA];
 
         MPI_Send(argumentos, NUM_ARGUMENTOS, MPI_UNSIGNED, MAESTRO, 0, MPI_COMM_WORLD);
-        sleep(2); /* Duerme dos segundos antes de volver a mandar otro mensaje de aparque para permitir a los vehiculos
-                    que se han dormido en el cuerpo del bucle mandar la senal de aparque antes que este. */
+
+        // Duerme un tiempo aleatorio antes de volver a mandar otro mensaje de aparque.
+        tiempo_dormir = rand() % T_DORMIDO_MAX + 1;
+        sleep(tiempo_dormir);
     }
 
     // Se finaliza MPI.
