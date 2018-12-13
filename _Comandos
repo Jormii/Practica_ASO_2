@@ -1,3 +1,0 @@
-Compilacion: mpicc <archivo_compilado> -o <archivo_a_compilar>
-Ejecucion para N nodos: mpirun --map-by socket:OVERSUBSCRIBE -np <N> <archivo_compilado>
-Ejecucion de X procesos: mpirun -np <N> <archivo_X> : -np <M> <archivo_Y> ...
