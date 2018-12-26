@@ -197,6 +197,7 @@ int main(int argc, char *argv[])
             printf("\tPrimera plaza que ocupa: %d\n", primera_plaza);
 
             vaciar_plaza(&park, tamano, matricula_o_piso, primera_plaza);
+            imprimir_parking(&park);
 
             // Si hay vehiculos en la cola, mirar hay plazas disponibles para su primer elemento.
             if (!isEmpty(cola_vehiculos))
@@ -224,7 +225,6 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        printf("No se encontro\n");
                         peek = NULL;
                     }
                 }
@@ -233,7 +233,6 @@ int main(int argc, char *argv[])
         default:
             fprintf(stderr, "Error: El codigo de operacion {%d} es extrano\n", operacion);
         }
-        printf("Parking actualizado:\n");
         imprimir_parking(&park);
         imprimir_cola(cola_vehiculos);
         printf("\n");
