@@ -1,3 +1,8 @@
 #!/bin/bash
 
-mpirun --hostfile hostfile -np 1 parking 2 5 : -np 5 camion : -np 5 coche
+PISOS=2
+PLAZAS=5
+CAMIONES=5
+COCHES=5
+
+mpirun --hostfile hostfile -np 1 parking $PISOS $PLAZAS : -np $CAMIONES camion : -np $COCHES coche
