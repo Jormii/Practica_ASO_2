@@ -11,7 +11,7 @@ void crear_parking(parking *park, int pisos, int plazas)
     for (int p = 0; p < pisos; p++)
     {
         piso *pi = &(park->pisos[p]);
-        pi->id_vehiculos = (int *)calloc(plazas, sizeof(int));
+        pi->id_vehiculos = (unsigned int *)calloc(plazas, sizeof(unsigned int));
         pi->plazas_libres = (unsigned int)plazas;
 
         for (int pz = 0; pz != plazas; ++pz)
@@ -30,20 +30,96 @@ void destruir_parking(parking *park)
     free(park->pisos);
 }
 
+void aparcar(parking *park, Queue *cola_vehiculos, unsigned int *argumentos)
+{
+    unsigned int tamano = argumentos[ARG_TAMANO];
+    unsigned int matricula = argumentos[ARG_MATRICULA_O_PISO];
+
+    printf("\tMatricula del vehiculo: %u\n", matricula);
+
+    // Si hay otros vehiculos esperando a entrar, introducir el vehiculo en la cola.
+    if (!isEmpty(cola_vehiculos))
+    {
+        queue_vehiculo(cola_vehiculos, tamano, matricula);
+    }
+    else
+    {
+        unsigned int returns_array[NUM_RETURNS];
+        char plaza_encontrada = buscar_plaza(park, returns_array, matricula, tamano);
+        printf("Habia plaza para este vehiculo: %hhd\n", plaza_encontrada);
+
+        // Si se encuentra plaza, notificar al proceso vehiculo.
+        if (plaza_encontrada)
+        {
+            MPI_Send(returns_array, NUM_RETURNS, MPI_UNSIGNED, matricula, 0, MPI_COMM_WORLD);
+        }
+        else
+        // Introducirlo en la cola
+        {
+            queue_vehiculo(cola_vehiculos, tamano, matricula);
+        }
+    }
+}
+
+void salir(parking *park, Queue *cola_vehiculos, unsigned int *argumentos)
+{
+    unsigned int tamano = argumentos[ARG_TAMANO];
+    unsigned int piso = argumentos[ARG_MATRICULA_O_PISO];
+    unsigned int primera_plaza = argumentos[ARG_PLAZA];
+
+    printf("\tPiso en el que el vehiculo esta aparcado: %d\n", piso);
+    printf("\tPrimera plaza que ocupa: %d\n", primera_plaza);
+
+    vaciar_plaza(park, tamano, piso, primera_plaza);
+
+    // Mientras haya vehiculos en la cola, mirar si hay plazas disponibles para su primer elemento.
+    if (!isEmpty(cola_vehiculos))
+    {
+        queue_node *peek = cola_vehiculos->head;
+
+        while (peek != NULL)
+        {
+            unsigned int matricula = peek->matricula;
+            unsigned int tamano = peek->tamano;
+
+            printf("Se va a comprobar si el vehiculo %u de tamano %u tiene sitio en el parking\n", matricula, tamano);
+
+            unsigned int returns_array[NUM_RETURNS];
+            char plaza_encontrada = buscar_plaza(park, returns_array, matricula, tamano);
+
+            // Si se encontro plaza para el vehiculo, desbloquear al proceso correspondiente.
+            if (plaza_encontrada)
+            {
+                printf("Se encontro en el piso %u. Primera plaza: %u\n",
+                       returns_array[RETURN_PISO], returns_array[RETURN_PRIMERA_PLAZA]);
+                queue_node *pop = Dequeue(cola_vehiculos);
+                free(pop);
+                MPI_Send(returns_array, NUM_RETURNS, MPI_UNSIGNED, matricula, 0, MPI_COMM_WORLD);
+                peek = peek->prev;
+            }
+            else
+            {
+                printf("No se encontro\n");
+                peek = NULL;
+            }
+        }
+    }
+}
+
 char buscar_plaza(parking *park, unsigned int *returns_array, unsigned int matricula, unsigned int tamano)
 {
     // Se iteran todos los pisos del parking.
-    for (int p = 0; p < park->n_pisos; p++)
+    for (unsigned int p = 0; p < park->n_pisos; p++)
     {
-        int *p_pz_libres = &(park->pisos[p].plazas_libres);
+        unsigned int *p_pzs_libres = &(park->pisos[p].plazas_libres);
 
-        printf("{P%d}: %d plazas libres de %d\n", p, *p_pz_libres, park->n_plazas);
+        printf("{P%d}: %d plazas libres de %d\n", p, *p_pzs_libres, park->n_plazas);
 
         // Si hay suficientes plazas libres como para alojar el vehiculo, buscar en el piso.
-        if (*p_pz_libres >= tamano)
+        if (*p_pzs_libres >= tamano)
         {
             int cnt = 0;
-            int *plazas = park->pisos[p].id_vehiculos;
+            unsigned int *plazas = park->pisos[p].id_vehiculos;
 
             // Iterar las plazas del piso en busca de plazas vacias consecutivas donde aparcar el vehiculo.
             for (int pz = 0; pz < park->n_plazas; pz++)
@@ -54,17 +130,17 @@ char buscar_plaza(parking *park, unsigned int *returns_array, unsigned int matri
                 if (cnt == tamano)
                 {
                     // Se actualizan las variables del piso.
-                    *p_pz_libres -= tamano;
+                    *p_pzs_libres -= tamano;
 
-                    int primera_plaza = pz - tamano + 1;
+                    unsigned int primera_plaza = pz - tamano + 1;
                     for (int i = primera_plaza; i <= pz; i++)
                     {
                         plazas[i] = matricula;
                     }
 
                     // Se configura la variable de retorno y se devuelve "true".
-                    returns_array[RETURN_PISO] = (unsigned int)p;
-                    returns_array[RETURN_PRIMERA_PLAZA] = (unsigned int)primera_plaza;
+                    returns_array[RETURN_PISO] = p;
+                    returns_array[RETURN_PRIMERA_PLAZA] = primera_plaza;
                     return PLAZA_ENCONTRADA;
                 }
             }
@@ -145,7 +221,7 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &n_esclavos);
     n_esclavos -= 1; // Se resta el proceso parking.
 
-    Queue *cola_vehiculos = ConstructQueue(n_esclavos);
+    Queue *cola_vehiculos = ConstructQueue(n_esclavos); // Se crea una cola de tamano igual al numero de esclavos.
     unsigned int argumentos[NUM_ARGUMENTOS];
     unsigned int returns_array[NUM_RETURNS];
 
@@ -154,85 +230,23 @@ int main(int argc, char *argv[])
         // Recibir un mensaje enviado por alguno de los vehiculos.
         MPI_Recv(argumentos, NUM_ARGUMENTOS, MPI_UNSIGNED, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        // Parsear el mensaje.
-        unsigned int operacion = argumentos[ARG_OPERACION];
-        unsigned int tamano = argumentos[ARG_TAMANO];
-        unsigned int matricula_o_piso = argumentos[ARG_MATRICULA_O_PISO];
-        unsigned int primera_plaza = argumentos[ARG_PLAZA];
-
         printf("El parking ha recibido un mensaje. Argumentos:\n");
-        printf("\tOperacion: %s\n", (operacion == OP_APARCAR) ? "Aparcar" : "Salir");
-        printf("\tTamano del vehiculo: %u\n", tamano);
+        printf("\tOperacion: %s\n", (argumentos[ARG_OPERACION] == OP_APARCAR) ? "Aparcar" : "Salir");
+        printf("\tTamano del vehiculo: %u\n", argumentos[ARG_TAMANO]);
 
         // Actuar en funcion del codigo de operacion enviado por el vehiculo.
-        switch (operacion)
+        switch (argumentos[ARG_OPERACION])
         {
         case OP_APARCAR:
-            printf("\tMatricula del vehiculo: %u\n", matricula_o_piso);
-
-            // Si hay otros vehiculos esperando a entrar, introducir el vehiculo en la cola.
-            if (!isEmpty(cola_vehiculos))
-            {
-                queue_vehiculo(cola_vehiculos, tamano, matricula_o_piso);
-            }
-            else
-            {
-                char plaza_encontrada = buscar_plaza(&park, returns_array, matricula_o_piso, tamano);
-                printf("Habia plaza para este vehiculo: %u\n", plaza_encontrada);
-
-                // Si se encuentra plaza, notificar al proceso vehiculo
-                if (plaza_encontrada)
-                {
-                    MPI_Send(returns_array, NUM_RETURNS, MPI_UNSIGNED, matricula_o_piso, 0, MPI_COMM_WORLD);
-                }
-                else
-                // Introducirlo en la cola
-                {
-                    queue_vehiculo(cola_vehiculos, tamano, matricula_o_piso);
-                }
-            }
+            aparcar(&park, cola_vehiculos, argumentos);
             break;
         case OP_SALIR:
-            printf("\tPiso en el que el vehiculo esta aparcado: %d\n", matricula_o_piso);
-            printf("\tPrimera plaza que ocupa: %d\n", primera_plaza);
-
-            vaciar_plaza(&park, tamano, matricula_o_piso, primera_plaza);
-            imprimir_parking(&park);
-
-            // Si hay vehiculos en la cola, mirar hay plazas disponibles para su primer elemento.
-            if (!isEmpty(cola_vehiculos))
-            {
-                queue_node *peek = cola_vehiculos->head;
-
-                while (peek != NULL)
-                {
-                    unsigned int matricula = peek->matricula;
-                    unsigned int tamano = peek->tamano;
-
-                    printf("Se va a comprobar si el vehiculo %u de tamano %u tiene sitio en el parking\n", matricula, tamano);
-
-                    char plaza_encontrada = buscar_plaza(&park, returns_array, matricula, tamano);
-
-                    // Si se encontro plaza para el vehiculo, desbloquear al proceso correspondiente.
-                    if (plaza_encontrada)
-                    {
-                        printf("Se encontro en el piso %u. Primera plaza: %u\n",
-                               returns_array[RETURN_PISO], returns_array[RETURN_PRIMERA_PLAZA]);
-                        queue_node *pop = Dequeue(cola_vehiculos);
-                        free(pop);
-                        MPI_Send(returns_array, NUM_RETURNS, MPI_UNSIGNED, matricula, 0, MPI_COMM_WORLD);
-                        peek = peek->prev;
-                    }
-                    else
-                    {
-                        peek = NULL;
-                    }
-                }
-            }
+            salir(&park, cola_vehiculos, argumentos);
             break;
         default:
-            fprintf(stderr, "Error: El codigo de operacion {%d} es extrano\n", operacion);
+            fprintf(stderr, "Error: El codigo de operacion {%d} es extrano\n", argumentos[ARG_OPERACION]);
         }
+        printf("Parking actualizado:\n");
         imprimir_parking(&park);
         imprimir_cola(cola_vehiculos);
         printf("\n");

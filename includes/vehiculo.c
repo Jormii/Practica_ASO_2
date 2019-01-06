@@ -8,9 +8,9 @@ void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **ar
     srand(time(NULL));
 
     // Se crea el vehiculo.
-    vehiculo vehi;
-    MPI_Comm_rank(MPI_COMM_WORLD, &vehi.matricula);
-    vehi.tamano = tamano_vehiculo;
+    unsigned int tamano = tamano_vehiculo;
+    unsigned int matricula;
+    MPI_Comm_rank(MPI_COMM_WORLD, &matricula);
 
     // Se crea la variable de argumentos que se pasaran al proceso parking.
     unsigned int argumentos[NUM_ARGUMENTOS];
@@ -23,8 +23,8 @@ void vehiculo_bucle_principal(unsigned int tamano_vehiculo, int *argc, char **ar
     {
         // Se configuran los argumentos para mandar el mensaje de aparque.
         argumentos[ARG_OPERACION] = OP_APARCAR;
-        argumentos[ARG_TAMANO] = vehi.tamano;
-        argumentos[ARG_MATRICULA_O_PISO] = vehi.matricula;
+        argumentos[ARG_TAMANO] = tamano;
+        argumentos[ARG_MATRICULA_O_PISO] = matricula;
         argumentos[ARG_PLAZA] = 0;
 
         // Se envia la senal de aparque.

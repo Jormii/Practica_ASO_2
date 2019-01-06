@@ -33,12 +33,23 @@ void crear_parking(parking *park, int pisos, int plazas);
 void destruir_parking(parking *park);
 
 /**
+ * Funcion que se encarga de gestionar la operacion de aparque.
+ */
+void aparcar(parking *park, Queue *cola_vehiculos, unsigned int *argumentos);
+
+/**
+ * Funcion que se encarga de gestionar la operacion de salida.
+ */
+void salir(parking *park, Queue *cola_vehiculos, unsigned int *argumentos);
+
+/**
  * Itera los pisos del parking argumento en busca de un lugar donde aparcar un vehiculo con matricula "matricula"
  * y de tamano "tamano".
- * Si se encuentra plaza, se devuelve "PLAZA_ENCONTRADA" y se actualizan las variables del parking.
- * Si no se encuentra plaza, se devuelve "PLAZA_NO_ENCONTRADA".
+ * Si se encuentra plaza, se devuelve "PLAZA_ENCONTRADA"(1) y se actualizan las variables del parking.
+ * Si no se encuentra plaza, se devuelve "PLAZA_NO_ENCONTRADA"(0).
  * La variable "returns_array" contendra los valores de retorno que se enviaran al vehiculo que mando la operacion de
  * aparque en caso de que el valor devuelto sea "PLAZA_ENCONTRADA".
+ * Si se devuelve "PLAZA_NO_ENCONTRADA", el contenido de "returns_array" sera basura.
  */
 char buscar_plaza(parking *park, unsigned int *returns_array, unsigned int matricula, unsigned int tamano);
 
@@ -49,7 +60,7 @@ char buscar_plaza(parking *park, unsigned int *returns_array, unsigned int matri
 void vaciar_plaza(parking *park, unsigned int tamano, unsigned int piso, unsigned int primera_plaza);
 
 /**
- * Introuduce el vehiculo en una cola
+ * Introuduce un vehiculo en una cola.
  */
 void queue_vehiculo(Queue *cola, unsigned int tamano, unsigned int matricula);
 
@@ -68,7 +79,7 @@ typedef struct parking_t
 {
     unsigned int n_pisos;  // Numero de pisos del parking.
     unsigned int n_plazas; // Numero de plazas por piso del parking.
-    piso *pisos;  // Array con los pisos del parking.
+    piso *pisos;           // Array con los pisos del parking.
 } parking;
 
 typedef struct piso_t
